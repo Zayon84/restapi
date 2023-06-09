@@ -9,7 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:7287") });
+//builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:7287") });
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://davidrestapi.azurewebsites.net/api") });
 
 var app = builder.Build();
 
