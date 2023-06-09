@@ -1,0 +1,105 @@
+﻿@page "/fetchdata"
+@using GameItemsBlazor.Data
+@using GameItemsBlazor.Models;
+@inject WeatherForecastService ForecastService
+@inject HttpClient Http
+
+<PageTitle>Game list</PageTitle>
+
+<h1>Game list goes here</h1>
+
+<p>Testing azure functions.</p>
+
+<EditForm Model="itemCreate" OnValidSubmit="HandleCreate">
+    <InputText class="form-control" @bind-Value="itemCreate.ItemName"></InputText>
+    <br />
+    <button class="btn btn-primary" type="submit">
+        <span class="oi oi-pencil">Create</span>
+    </button>
+</EditForm>
+<br />
+<br />
+
+@if (items == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Item name</th>
+                <th>Created</th>
+                <th>Played</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item  in items)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.ItemName</td>
+                    <td>@item.Created</td>
+                    <td>
+                        <input type="checkbox" class="form-check" value="@item.Played" @onchange="eventArgs => {CheckBoxClicked(item,eventArgs.Value);}">
+                    </td>
+                    <td>
+                        <button class="btn btn-danger" @onclick="eventArgs => {DeleteClicked(item);}">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private GameItem[]? items;
+    private CreateGameItem itemCreate = new();
+
+    // Uppdatera på automatik
+    protected override async Task OnInitializedAsync()
+    {
+        items = await Http.GetFromJsonAsync<GameItem[]>("api/gameitems");
+        StateHasChanged();
+    }
+
+    // Create
+    private async Task HandleCreate()
+    {
+        var response = await Http.PostAsJsonAsync<CreateGameItem>("api/gameitems", itemCreate);
+        if (response.IsSuccessStatusCode)
+        {
+            await OnInitializedAsync();
+        }
+    }
+
+    // Uppdatera om man spelat spelet
+    private async Task CheckBoxClicked(GameItem item, object checkValue)
+    {
+        UpdateGameItem updateItem = new UpdateGameItem()
+        {
+            Played = (bool)checkValue
+        };
+
+        var response = await Http.PutAsJsonAsync<UpdateGameItem>($"api/gameitems/{item.Id}", updateItem);
+        if (response.IsSuccessStatusCode)
+        {
+            // updatera listan varje gång
+            await OnInitializedAsync();
+        }
+    }
+
+    // Delete
+    private async Task DeleteClicked(GameItem item)
+    {
+        var response = await Http.DeleteAsync($"api/gameitems/{item.Id}");
+        if (response.IsSuccessStatusCode)
+        {
+            // updatera listan varje gång
+            await OnInitializedAsync();
+        }
+    }
+}
